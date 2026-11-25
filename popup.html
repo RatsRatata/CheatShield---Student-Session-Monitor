@@ -9,28 +9,41 @@
   <body>
     <div class="container">
       <header class="header">
-        <div>
-          <h1>CheatShield</h1>
-          <p class="subtitle">Student Integrity Session Logger</p>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <img src="Logo.png" alt="CheatShield Logo" width="26" height="26" />
+          <div>
+            <h1>CheatShield</h1>
+            <p class="subtitle">Student Integrity Session Logger</p>
+          </div>
         </div>
         <span id="status-badge" class="badge idle">Idle</span>
       </header>
 
-      <!-- VIEW 1: Gmail & Student Setup -->
+      <!-- VIEW 1: Student & Proctor Setup -->
       <section id="setup-view" class="card">
         <form id="start-form" class="stack">
           <div class="field">
-            <label for="student-name">Student Name / ID</label>
+            <label for="student-name">Student Name</label>
             <input
               type="text"
               id="student-name"
-              placeholder="e.g., Juan Dela Cruz (2024-00123)"
+              placeholder="e.g., Juan Dela Cruz"
               required
             />
           </div>
 
           <div class="field">
-            <label for="proctor-email">Proctor / Result Gmail</label>
+            <label for="course-section">Course and Section</label>
+            <input
+              type="text"
+              id="course-section"
+              placeholder="e.g., BSIT 3-1"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="proctor-email">Email to send to</label>
             <input
               type="email"
               id="proctor-email"
@@ -56,6 +69,10 @@
         <div class="meta-bar">
           <span
             ><strong>Student:</strong> <span id="display-student"></span
+          ></span>
+          <span
+            ><strong>Course &amp; Section:</strong>
+            <span id="display-course"></span
           ></span>
           <span
             ><strong>Send to:</strong> <span id="display-email"></span

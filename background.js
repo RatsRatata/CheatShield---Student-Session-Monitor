@@ -13,6 +13,7 @@ const AI_DOMAINS = [
 const DEFAULT_STATE = {
   isMonitoring: false,
   studentName: "",
+  courseSection: "",
   proctorEmail: "",
   flagAiSites: true,
   startedAt: null,
@@ -23,6 +24,8 @@ const DEFAULT_STATE = {
 let writeQueue = Promise.resolve();
 let lastHost = "";
 let lastHostTime = 0;
+let lastTabSwitchTime = 0;
+let lastAppSwitchTime = 0;
 
 chrome.runtime.onInstalled.addListener(async () => {
   const existing = await chrome.storage.local.get("session");
@@ -33,6 +36,10 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 function logEvent(type, detail, isAiFlag = false, host = null) {
   const now = Date.now();
+
+  if (type !== "APP_SWITCH") {
+    lastTabSwitchTime = now;
+  }
 
   if (host) {
     if (host === lastHost && now - lastHostTime < 2000) {
@@ -86,13 +93,14 @@ function classifyUrl(rawUrl) {
 
 // 1. Track switching between existing tabs
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  lastTabSwitchTime = Date.now();
   const { session } = await chrome.storage.local.get("session");
   if (!session || !session.isMonitoring) return;
 
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
     const info = classifyUrl(tab.url || "");
-    if (!info) return; // Ignore internal chrome:// pages
+    if (!info) return;
 
     if (info.isAi && session.flagAiSites) {
       await logEvent(
@@ -132,5 +140,33 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     );
   } else {
     await logEvent("URL_VISIT", `Visited: ${info.host}`, false, info.host);
+  }
+});
+
+// Replace the bottom chrome.runtime.onMessage listener in background.js with this:
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg.type === "START_MONITORING") {
+    // Inject content.js into all already-open tabs so Alt+Tab works immediately without F5
+    chrome.tabs.query({ url: ["http://*/*", "https://*/*"] }).then((tabs) => {
+      for (const tab of tabs) {
+        chrome.scripting
+          .executeScript({
+            target: { tabId: tab.id, allFrames: true },
+            files: ["content.js"],
+          })
+          .catch(() => {});
+      }
+    });
+    return;
+  }
+
+  if (msg.type === "PAGE_BLUR" && sender.tab?.active) {
+    const now = Date.now();
+    // Ignore post-load iframe focus shifts on AI sites within 2.5s of a tab/page event
+    if (now - lastTabSwitchTime < 2500) return;
+    if (now - lastAppSwitchTime < 2000) return;
+
+    lastAppSwitchTime = now;
+    logEvent("APP_SWITCH", "Switched outside browser (Alt+Tab / Cmd+Tab)");
   }
 });

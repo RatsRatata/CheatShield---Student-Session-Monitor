@@ -3,13 +3,32 @@
   "name": "CheatShield - Student Session Monitor",
   "version": "1.0.0",
   "description": "Self-installed student exam integrity monitor with tab switching, window focus, and site logging.",
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs", "storage", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "icons": {
+    "16": "Logo.png",
+    "48": "Logo.png",
+    "128": "Logo.png"
+  },
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "CheatShield Monitor"
+    "default_title": "CheatShield Monitor",
+    "default_icon": {
+      "16": "Logo.png",
+      "48": "Logo.png",
+      "128": "Logo.png"
+    }
   }
 }

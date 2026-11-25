@@ -12,6 +12,7 @@ const statusBadge = document.getElementById("status-badge");
 let lastGeneratedReport = "";
 let lastProctorEmail = "";
 let lastStudentName = "";
+let lastCourseSection = "";
 
 function showView(viewName) {
   setupView.classList.toggle("hidden", viewName !== "setup");
@@ -35,10 +36,15 @@ function renderSession(session) {
 
   showView("monitor");
   document.getElementById("display-student").textContent = session.studentName;
+  document.getElementById("display-course").textContent =
+    session.courseSection || "";
   document.getElementById("display-email").textContent = session.proctorEmail;
 
   const tabCount = session.events.filter(
-    (e) => e.type === "TAB_SWITCH" || e.type === "AI_SITE",
+    (e) =>
+      e.type === "TAB_SWITCH" ||
+      e.type === "AI_SITE" ||
+      e.type === "APP_SWITCH",
   ).length;
   const aiCount = session.events.filter((e) => e.isAiFlag).length;
 
@@ -62,19 +68,23 @@ function renderSession(session) {
 function buildReportText(session) {
   const endedAt = new Date().toLocaleString();
   const tabCount = session.events.filter(
-    (e) => e.type === "TAB_SWITCH" || e.type === "AI_SITE",
+    (e) =>
+      e.type === "TAB_SWITCH" ||
+      e.type === "AI_SITE" ||
+      e.type === "APP_SWITCH",
   ).length;
   const aiEvents = session.events.filter((e) => e.isAiFlag);
 
   return [
     `=== CHEATSHIELD INTEGRITY REPORT ===`,
-    `Student: ${session.studentName}`,
+    `Student Name: ${session.studentName}`,
+    `Course & Section: ${session.courseSection}`,
     `Proctor Email: ${session.proctorEmail}`,
     `Started: ${new Date(session.startedAt).toLocaleString()}`,
     `Ended: ${endedAt}`,
     ``,
     `--- SUMMARY ---`,
-    `Tab Switches: ${tabCount}`,
+    `Tab / Focus Switches: ${tabCount}`,
     `AI Website Flags: ${aiEvents.length}`,
     `Unique Domains Opened (${session.visitedUrls.length}): ${session.visitedUrls.join(", ") || "None"}`,
     ``,
@@ -86,7 +96,12 @@ function buildReportText(session) {
   ].join("\n");
 }
 
-async function sendReportToGmail(proctorEmail, studentName, reportText) {
+async function sendReportToGmail(
+  proctorEmail,
+  studentName,
+  courseSection,
+  reportText,
+) {
   if (
     EMAILJS_CONFIG.serviceId &&
     EMAILJS_CONFIG.templateId &&
@@ -102,6 +117,7 @@ async function sendReportToGmail(proctorEmail, studentName, reportText) {
         template_params: {
           to_email: proctorEmail,
           student_name: studentName,
+          course_section: courseSection,
           report_body: reportText,
         },
       }),
@@ -115,6 +131,7 @@ async function sendReportToGmail(proctorEmail, studentName, reportText) {
 document.getElementById("start-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const studentName = document.getElementById("student-name").value.trim();
+  const courseSection = document.getElementById("course-section").value.trim();
   const proctorEmail = document.getElementById("proctor-email").value.trim();
   const flagAiSites = document.getElementById("flag-ai").checked;
   const errEl = document.getElementById("setup-error");
@@ -129,6 +146,7 @@ document.getElementById("start-form").addEventListener("submit", async (e) => {
   const session = {
     isMonitoring: true,
     studentName,
+    courseSection,
     proctorEmail,
     flagAiSites,
     startedAt: Date.now(),
@@ -137,6 +155,7 @@ document.getElementById("start-form").addEventListener("submit", async (e) => {
   };
 
   await chrome.storage.local.set({ session });
+  chrome.runtime.sendMessage({ type: "START_MONITORING" }).catch(() => {});
   renderSession(session);
 });
 
@@ -150,6 +169,7 @@ document.getElementById("finish-btn").addEventListener("click", async () => {
   lastGeneratedReport = buildReportText(session);
   lastProctorEmail = session.proctorEmail;
   lastStudentName = session.studentName;
+  lastCourseSection = session.courseSection;
 
   document.getElementById("report-preview").value = lastGeneratedReport;
   showView("summary");
@@ -159,6 +179,7 @@ document.getElementById("finish-btn").addEventListener("click", async () => {
     const mode = await sendReportToGmail(
       lastProctorEmail,
       lastStudentName,
+      lastCourseSection,
       lastGeneratedReport,
     );
     if (mode === "sent_auto") {
@@ -166,7 +187,7 @@ document.getElementById("finish-btn").addEventListener("click", async () => {
     } else {
       statusEl.textContent = `Report ready for ${lastProctorEmail}. Click "Open in Gmail" below to send.`;
       const subject = encodeURIComponent(
-        `CheatShield Report - ${lastStudentName}`,
+        `CheatShield Report - ${lastStudentName} (${lastCourseSection})`,
       );
       const body = encodeURIComponent(lastGeneratedReport);
       chrome.tabs.create({
@@ -179,7 +200,9 @@ document.getElementById("finish-btn").addEventListener("click", async () => {
 });
 
 document.getElementById("mailto-btn").addEventListener("click", () => {
-  const subject = encodeURIComponent(`CheatShield Report - ${lastStudentName}`);
+  const subject = encodeURIComponent(
+    `CheatShield Report - ${lastStudentName} (${lastCourseSection})`,
+  );
   const body = encodeURIComponent(lastGeneratedReport);
   chrome.tabs.create({
     url: `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(lastProctorEmail)}&su=${subject}&body=${body}`,
@@ -190,8 +213,10 @@ document.getElementById("download-btn").addEventListener("click", () => {
   const blob = new Blob([lastGeneratedReport], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+  const safeName = lastStudentName.replace(/\s+/g, "_");
+  const safeSection = lastCourseSection.replace(/\s+/g, "_");
   a.href = url;
-  a.download = `CheatShield_${lastStudentName.replace(/\s+/g, "_")}.txt`;
+  a.download = `CheatShield_${safeName}_${safeSection}.txt`;
   a.click();
 });
 
