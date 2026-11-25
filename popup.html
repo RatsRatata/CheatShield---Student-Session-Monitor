@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CheatShield Monitor</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div>
+          <h1>CheatShield</h1>
+          <p class="subtitle">Student Integrity Session Logger</p>
+        </div>
+        <span id="status-badge" class="badge idle">Idle</span>
+      </header>
+
+      <!-- VIEW 1: Gmail & Student Setup -->
+      <section id="setup-view" class="card">
+        <form id="start-form" class="stack">
+          <div class="field">
+            <label for="student-name">Student Name / ID</label>
+            <input
+              type="text"
+              id="student-name"
+              placeholder="e.g., Juan Dela Cruz (2024-00123)"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="proctor-email">Proctor / Result Gmail</label>
+            <input
+              type="email"
+              id="proctor-email"
+              placeholder="proctor@gmail.com"
+              required
+            />
+          </div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" id="flag-ai" checked />
+            <span>Flag AI websites (ChatGPT, Claude, Gemini, etc.)</span>
+          </label>
+
+          <p id="setup-error" class="error-text hidden"></p>
+          <button type="submit" class="btn primary">
+            Start Exam Monitoring
+          </button>
+        </form>
+      </section>
+
+      <!-- VIEW 2: Active Monitoring -->
+      <section id="monitor-view" class="stack hidden">
+        <div class="meta-bar">
+          <span
+            ><strong>Student:</strong> <span id="display-student"></span
+          ></span>
+          <span
+            ><strong>Send to:</strong> <span id="display-email"></span
+          ></span>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-num" id="stat-tabs">0</span>
+            <span class="stat-label">Tab / Focus</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="stat-sites">0</span>
+            <span class="stat-label">Sites Opened</span>
+          </div>
+          <div class="stat-box danger">
+            <span class="stat-num" id="stat-ai">0</span>
+            <span class="stat-label">AI Flags</span>
+          </div>
+        </div>
+
+        <div class="log-panel">
+          <div class="log-header">
+            <span>Activity Feed</span>
+            <span id="event-count">0 events</span>
+          </div>
+          <ul id="event-list" class="event-list"></ul>
+        </div>
+
+        <button id="finish-btn" class="btn danger-btn">
+          End Exam & Send Report
+        </button>
+      </section>
+
+      <!-- VIEW 3: Report Sent / Fallback -->
+      <section id="summary-view" class="card stack hidden">
+        <h2>Exam Session Ended</h2>
+        <p id="send-status" class="status-msg"></p>
+        <textarea id="report-preview" rows="7" readonly></textarea>
+        <div class="btn-row">
+          <button id="mailto-btn" class="btn secondary">Open in Gmail</button>
+          <button id="download-btn" class="btn secondary">Download .TXT</button>
+        </div>
+        <button id="reset-btn" class="btn primary">Start New Session</button>
+      </section>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
