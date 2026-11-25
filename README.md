@@ -42,6 +42,26 @@
 1. Go to the **[CheatShield_v1 Release Page](https://github.com/RatsRatata/CheatShield/releases/tag/CheatShield_v1)** and download **`CheatShield.zip`** under **Assets**.
 2. Extract **`CheatShield.zip`** to a folder on your computer.
 3. Open Google Chrome (or any Chromium-based browser such as Brave, Edge, or Thorium) and go to:
-   ```text
+
    chrome://extensions
-   ```
+
+4. Toggle **Developer mode** ON in the top-right corner of the page.
+5. Click **Load unpacked** in the top-left corner and select the extracted **`CheatShield`** folder (the directory containing `manifest.json`).
+6. Click the **Extensions (puzzle piece)** icon in your browser toolbar and pin **CheatShield** for quick access before starting an exam.
+
+### Option 2: Clone from Source
+
+1. Clone the repository:
+
+   git clone [https://github.com/RatsRatata/CheatShield.git](https://github.com/RatsRatata/CheatShield.git)
+
+2. Follow steps **3–6** above and select the cloned **`CheatShield`** folder.
+
+---
+
+## How to Use
+
+1. Click the **CheatShield** icon in your browser toolbar.
+2. Enter your **Student Name**, **Course and Section**, and your instructor's **Email to send to** (`@gmail.com`).
+3. Click **Start Exam Monitoring** and complete your exam normally.
+4. Once finished, open the **CheatShield** popup and click **End Exam & Send Report** to send the generated report via Gmail or download the `.txt` log.
